@@ -5,7 +5,7 @@ mod common;
 mod init;
 
 fn main() {
-    init::__sync__init__();
+    init::__sync__init();
     tokio::runtime::Runtime::new()
         .expect("Runtine Init Failed")
         .block_on(application::run_application());
