@@ -1,1 +1,6 @@
 pub(crate) mod log;
+pub(crate) mod sync;
+pub(crate) mod alias;
+pub(crate) mod stdio;
+pub(crate) mod timer;
+pub(crate) mod child;
