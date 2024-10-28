@@ -22,6 +22,8 @@ pub struct HackerArgs {
     pub stderr: String,
     #[arg(long = "cycle")]
     pub cycle_cmds_raw: String,
+    #[arg(long = "c_time")]
+    pub cycle_cmds_time: u64,
 }
 impl HackerArgs {
     pub fn cycle_cmds(&self) -> Vec<String> {

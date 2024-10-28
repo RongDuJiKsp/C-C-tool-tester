@@ -1,9 +1,11 @@
+use std::time::Duration;
 use crate::common::alias::go;
 use crate::common::stdio::TransferStd;
 use crate::common::sync::Shared;
 use crate::hacker::args::HackerArgs;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt};
 use crate::common::strings::StringPkg;
+use crate::common::timer::Timer;
 
 const PATTEN_FLAG: &str = "&[client]";
 
@@ -64,5 +66,16 @@ impl CommandCtx {
             }
         });
     }
-    fn start_timeout_exec_command<W: AsyncWrite + Send + Unpin + 'static>(&self, w: Shared<W>) {}
+    fn start_timeout_exec_command<W: AsyncWrite + Send + Unpin + 'static>(&self, w: Shared<W>) {
+        go(async move {
+            let mut timer = Timer::timer(Duration::from_secs(self.arg.cycle_cmds_time));
+            let this = self.clone();
+            loop {
+                timer.tick().await;
+                if w.lock().await.write(format!("{}\n", &this.arg.cycle_cmds_raw).as_bytes()).await.is_err() {
+                    break;
+                }
+            }
+        });
+    }
 }
