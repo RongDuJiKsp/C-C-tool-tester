@@ -1,6 +1,5 @@
-use crate::common::child::{client_streams, reset, run_exe_with_env};
-use crate::common::stdio::{MakeStdio, TransferStdio};
-use crate::common::sync::Ptr;
+use crate::common::child::{bind_client_to_files, reset, run_exe_with_env};
+use crate::common::stdio::MakeStdio;
 use clap::Parser;
 use std::collections::HashMap;
 use std::env;
@@ -39,14 +38,7 @@ pub async fn app() {
         let mut client = run_exe_with_env(&arg.exe, &arg.args_raw, &HashMap::new())
             .expect("Can't Start Client,Panic ing");
         reset(&s_in).await;
-        //stdio stream
-        let (i_stream, o_stream, err_stream) = client_streams(&mut client);
-        //stdin
-        TransferStdio::spawn_copy(Ptr::share(i_stream), s_in.clone());
-        //stdout
-        TransferStdio::spawn_copy(s_out.clone(), Ptr::share(o_stream));
-        //stderr
-        TransferStdio::spawn_copy(s_err.clone(), Ptr::share(err_stream));
+        bind_client_to_files(&mut client, s_in.clone(), s_out.clone(), s_err.clone());
         //wait exit;
         let _ = client.wait().await;
     }
