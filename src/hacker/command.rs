@@ -1,6 +1,7 @@
 use crate::common::alias::go;
 use crate::common::sync::Shared;
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt};
+use crate::common::stdio::TransferStd;
 
 pub fn send_commend_and_waiting<
     W: AsyncWrite + Send + Unpin + 'static,
@@ -11,10 +12,18 @@ pub fn send_commend_and_waiting<
 ) {
     go(async move {
         let mut sender_buf = Vec::new();
-        let mut reader_buf = String::new();
         let r = recv.lock().await;
-        loop {}
+        let mut w = sender.lock().await;
+        loop {
+            let recv = TransferStd::read_line(&mut *r).await;
+            async_send_cmd_and_waiting(&mut sender_buf, recv).await;
+            for s in &sender_buf {
+                let _ = w.write(s.as_bytes()).await;
+                let _ = w.write_u8(b'\n').await;
+            }
+            sender_buf.clear()
+        }
     });
 }
 
-async fn async_send_cmd_and_waiting(sender: &Vec<String>, recv: String) {}
+async fn async_send_cmd_and_waiting(sender: &mut Vec<String>, recv: String) {}

@@ -75,21 +75,35 @@ impl TransferStdio {
             while res1 || res2 {
                 select! {
                     result = tr1.read_u8() => {
-                        res1=copy_byte(result,&mut *wer).await;
+                        res1=TransferStd::copy_byte(result,&mut *wer).await;
                     },
                     result = tr2.read_u8() => {
-                        res2=copy_byte(result,&mut *wer).await;
+                        res2=TransferStd::copy_byte(result,&mut *wer).await;
                     }
                 }
             }
         });
     }
 }
-async fn copy_byte(b: io::Result<u8>, w: &mut (dyn AsyncWrite + Unpin + Send)) -> bool {
-    if let Ok(u) = b {
-        if w.write_u8(u).await.is_ok() {
-            return true;
+pub struct TransferStd;
+impl TransferStd {
+    pub async fn copy_byte(b: io::Result<u8>, w: &mut (dyn AsyncWrite + Unpin + Send)) -> bool {
+        if let Ok(u) = b {
+            if w.write_u8(u).await.is_ok() {
+                return true;
+            }
         }
+        false
     }
-    false
+    pub async fn read_line(r: &mut (dyn AsyncRead + Unpin + Send)) -> String {
+        let mut buf = Vec::new();
+        while let Ok(u) = r.read_u8().await {
+            if u == b'\n' {
+                break;
+            }
+            buf.push(u);
+        }
+        String::from_utf8(buf).unwrap()
+    }
 }
+
