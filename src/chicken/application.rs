@@ -1,3 +1,1 @@
-pub async fn app(){
-
-}
+pub async fn app() {}

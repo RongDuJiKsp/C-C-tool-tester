@@ -1,7 +1,7 @@
 mod application;
 mod chicken;
-mod hacker;
 mod common;
+mod hacker;
 mod init;
 
 fn main() {
