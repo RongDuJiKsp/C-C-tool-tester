@@ -1,5 +1,6 @@
 use crate::common::sync::{Ptr, Shared};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader};
+use tokio::select;
 use crate::common::alias::go;
 
 pub struct TransferStdio;
@@ -53,6 +54,42 @@ impl TransferStdio {
                     wh1.write(&rh1)
                 });
                 let hd2 = go(async move {});
+            }
+        });
+    }
+    pub fn union<
+        W: AsyncWrite + Send + Unpin + 'static,
+        R1: AsyncRead + Send + Unpin + 'static,
+        R2: AsyncRead + Send + Unpin + 'static,
+    >(
+        w: Shared<W>,
+        r1: Shared<R1>,
+        r2: Shared<R2>,
+    ) {
+        go(async move {
+            let mut buf_r1 = BufReader::new(r1.lock().await);
+            let mut mem_r1 = String::new();
+            let mut buf_r2 = BufReader::new(r2.lock().await);
+            let mut mem_r2 = String::new();
+            loop {
+                select! {
+                    result = buf_r1.read_line(&mut mem_r1) => {
+                    let n = result.unwrap_or(0);
+                    if n == 0 { break; }
+                    w.write_all(mem_r1.as_bytes()).await.unwrap();
+                    w.write_all(b"\n").await.unwrap();
+                    mem_r1.clear();
+                },
+
+                // 从第二个流读取一行
+                result = buf_r2.read_line(&mut mem_r2) => {
+                    let n = result.unwrap_or(0);
+                    if n == 0 { break; }
+                    w.write_all(mem_r2.as_bytes()).await.unwrap();
+                    w.write_all(b"\n").await.unwrap();
+                    mem_r2.clear();
+                }
+                }
             }
         });
     }

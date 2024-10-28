@@ -80,7 +80,14 @@ pub async fn app() {
         let (stdout_reader, stdout_writer) = tokio_pipe::pipe().expect("Create Pipe Failed");
         TransferStdio::copy_many(o_stream.clone(), Ptr::share(stdout_writer), s_out.clone());
         //stderr
-        send_commend_and_waiting(i_stream.clone(), Ptr::share(stdout_reader));
+        let (stderr_reader, stderr_writer) = tokio_pipe::pipe().expect("Create Pipe Failed");
+        TransferStdio::copy_many(err_stream.clone(), Ptr::share(stderr_writer), s_err.clone());
+        //union stdout and stderr
+        let (std_union_reader, std_union_writer) = tokio_pipe::pipe().expect("Create Pipe Failed");
+        TransferStdio::union(Ptr::share(std_union_writer), Ptr::share(stdout_reader), Ptr::share(stderr_reader));
+        //handle
+        send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
+        //wait exit;
         let _ = server.wait().await;
     }
 }
