@@ -1,20 +1,14 @@
-use crate::common;
-use crate::common::alias::{go, StderrHd, StdinHd, StdoutHd};
-use crate::common::child::{
-    bind_client_output, bind_client_to_files, client_streams, reset, run_exe_with_env,
-};
-use crate::common::sync::{Ptr, Shared};
+use crate::common::alias::{StderrHd, StdinHd, StdoutHd};
+use crate::common::child::{client_streams, reset, run_exe_with_env};
+use crate::common::stdio::TransferStdio;
+use crate::common::sync::Ptr;
 use crate::hacker::command::send_commend_and_waiting;
 use clap::Parser;
 use std::collections::HashMap;
 use std::env;
-use std::io::SeekFrom;
-use std::str::SplitWhitespace;
 use tokio::fs::File;
 use tokio::io;
-use tokio::io::{AsyncRead, AsyncSeekExt, AsyncWrite, AsyncWriteExt};
-use tokio::process::Child;
-use crate::common::stdio::TransferStdio;
+use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Parser)]
 struct HackerArgs {
@@ -73,7 +67,11 @@ pub async fn app() {
         reset(&s_in).await;
         //stdio stream
         let (i_stream, o_stream, err_stream) = client_streams(&mut server);
-        let (i_stream, o_stream, err_stream) = (Ptr::share(i_stream), Ptr::share(o_stream), Ptr::share(err_stream));
+        let (i_stream, o_stream, err_stream) = (
+            Ptr::share(i_stream),
+            Ptr::share(o_stream),
+            Ptr::share(err_stream),
+        );
         //stdin
         TransferStdio::spawn_copy(i_stream.clone(), s_in.clone());
         //stdout
@@ -84,7 +82,11 @@ pub async fn app() {
         TransferStdio::copy_many(err_stream.clone(), Ptr::share(stderr_writer), s_err.clone());
         //union stdout and stderr
         let (std_union_reader, std_union_writer) = tokio_pipe::pipe().expect("Create Pipe Failed");
-        TransferStdio::union(Ptr::share(std_union_writer), Ptr::share(stdout_reader), Ptr::share(stderr_reader));
+        TransferStdio::union(
+            Ptr::share(std_union_writer),
+            Ptr::share(stdout_reader),
+            Ptr::share(stderr_reader),
+        );
         //handle
         send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
         //wait exit;

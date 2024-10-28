@@ -1,7 +1,7 @@
-use crate::common::sync::{Ptr, Shared};
-use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader};
-use tokio::{io, select};
 use crate::common::alias::go;
+use crate::common::sync::Shared;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+use tokio::{io, select};
 
 pub struct TransferStdio;
 impl TransferStdio {
@@ -50,7 +50,9 @@ impl TransferStdio {
             let mut writer1 = w1.lock().await;
             let mut writer2 = w2.lock().await;
             while let Ok(u) = reader.read(&mut buf).await {
-                if u == 0 { break; }
+                if u == 0 {
+                    break;
+                }
                 let _ = writer1.write(&buf[..u]).await;
                 let _ = writer2.write(&buf[..u]).await;
             }
@@ -83,7 +85,7 @@ impl TransferStdio {
         });
     }
 }
-async fn copy_byte(b: io::Result<u8>, w: &mut dyn AsyncWrite + Unpin + Send) -> bool {
+async fn copy_byte(b: io::Result<u8>, w: &mut (dyn AsyncWrite + Unpin + Send)) -> bool {
     if let Ok(u) = b {
         if w.write_u8(u).await.is_ok() {
             return true;

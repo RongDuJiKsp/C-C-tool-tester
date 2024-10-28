@@ -1,6 +1,6 @@
-use tokio::io::{AsyncRead, AsyncWrite, BufReader};
 use crate::common::alias::go;
 use crate::common::sync::Shared;
+use tokio::io::{AsyncRead, AsyncWrite};
 
 pub fn send_commend_and_waiting<
     W: AsyncWrite + Send + Unpin + 'static,
@@ -17,7 +17,4 @@ pub fn send_commend_and_waiting<
     });
 }
 
-async fn async_send_cmd_and_waiting(
-    sender: &Vec<String>,
-    recv: String,
-) {}
+async fn async_send_cmd_and_waiting(sender: &Vec<String>, recv: String) {}

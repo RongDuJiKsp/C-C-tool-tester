@@ -2,7 +2,6 @@ use crate::common::log::Log;
 use crate::{chicken, hacker, init};
 use std::env;
 
-
 const TIPS: &str = "\
 Usage: ./tester chicken ...args : Run C&C Client
 Usage: ./tester hacker ...args : Run C&C Server \
