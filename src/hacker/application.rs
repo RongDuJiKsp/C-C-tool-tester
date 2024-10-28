@@ -1,62 +1,11 @@
-use crate::common::alias::{StderrHd, StdinHd, StdoutHd};
 use crate::common::child::{client_streams, reset, run_exe_with_env};
 use crate::common::stdio::TransferStdio;
 use crate::common::sync::Ptr;
-use crate::hacker::command::send_commend_and_waiting;
+use crate::hacker::command::{CommandCtx};
 use clap::Parser;
 use std::collections::HashMap;
 use std::env;
-use tokio::fs::File;
-use tokio::io;
-use tokio::io::AsyncWriteExt;
-
-#[derive(Debug, Parser)]
-struct HackerArgs {
-    #[arg(short, long)]
-    exe: String,
-    #[arg(short, long = "args")]
-    args_raw: String,
-    #[arg(long = "exp-new-cl", help = "stdout with name &[client]")]
-    line_expr_of_new_client: String,
-    #[arg(long = "exp-use-cl", help = "run command with name &[client]")]
-    line_expr_of_use_client: String,
-    #[arg(long)]
-    stdin: String,
-    #[arg(long)]
-    stdout: String,
-    #[arg(long)]
-    stderr: String,
-    #[arg(long = "cycle")]
-    cycle_cmds_raw: String,
-}
-impl HackerArgs {
-    fn cycle_cmds(&self) -> Vec<String> {
-        self.cycle_cmds_raw
-            .split_whitespace()
-            .map(|x| x.to_string())
-            .collect()
-    }
-    fn args(&self) -> Vec<String> {
-        self.args_raw
-            .split_whitespace()
-            .map(|x| x.to_string())
-            .collect()
-    }
-    async fn make_stdio(&self) -> io::Result<(StdinHd, StdoutHd, StderrHd)> {
-        let stdin = File::options().read(true).open(&self.stdin).await?;
-        let stdout = File::options()
-            .write(true)
-            .append(true)
-            .open(&self.stdout)
-            .await?;
-        let stderr = File::options()
-            .write(true)
-            .append(true)
-            .open(&self.stderr)
-            .await?;
-        Ok((Ptr::share(stdin), Ptr::share(stdout), Ptr::share(stderr)))
-    }
-}
+use crate::hacker::args::HackerArgs;
 
 pub async fn app() {
     let arg = HackerArgs::parse_from(env::args().skip(2));
@@ -88,7 +37,7 @@ pub async fn app() {
             Ptr::share(stderr_reader),
         );
         //handle
-        send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
+        CommandCtx::make(arg.clone()).send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
         //wait exit;
         let _ = server.wait().await;
     }
