@@ -29,6 +29,7 @@ pub fn run_exe_with_env(
         .stderr(Stdio::piped())
         .spawn()
 }
+#[allow(dead_code)]
 pub fn bind_client_to_files<
     R: AsyncRead + Unpin + Send + 'static,
     W: AsyncWrite + Unpin + Send + 'static,
@@ -42,6 +43,7 @@ pub fn bind_client_to_files<
     TransferStdio::spawn_copy(Ptr::share(i), stdin);
     bind_client_output(client, stdout, stderr);
 }
+#[allow(dead_code)]
 pub fn bind_client_output<W: AsyncWrite + Unpin + Send + 'static>(
     client: &mut Child,
     stdout: Shared<W>,

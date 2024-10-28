@@ -1,11 +1,11 @@
-use std::time::Duration;
 use crate::common::alias::go;
 use crate::common::stdio::TransferStd;
-use crate::common::sync::Shared;
-use crate::hacker::args::HackerArgs;
-use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt};
 use crate::common::strings::StringPkg;
+use crate::common::sync::Shared;
 use crate::common::timer::Timer;
+use crate::hacker::args::HackerArgs;
+use std::time::Duration;
+use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 
 const PATTEN_FLAG: &str = "&[client]";
 
@@ -29,7 +29,9 @@ impl CommandCtx {
         self.start_timeout_exec_command(sender.clone());
     }
     fn read_news_and_use_it(&self, sender: &mut Vec<String>, recv: String) {
-        if let Some(val) = StringPkg::extract_value(&recv, &self.arg.line_expr_of_new_client, PATTEN_FLAG) {
+        if let Some(val) =
+            StringPkg::extract_value(&recv, &self.arg.line_expr_of_new_client, PATTEN_FLAG)
+        {
             sender.push(self.arg.line_expr_of_use_client.replace(PATTEN_FLAG, &val));
         }
     }
@@ -67,12 +69,17 @@ impl CommandCtx {
         });
     }
     fn start_timeout_exec_command<W: AsyncWrite + Send + Unpin + 'static>(&self, w: Shared<W>) {
+        let this = self.clone();
         go(async move {
-            let mut timer = Timer::timer(Duration::from_secs(self.arg.cycle_cmds_time));
-            let this = self.clone();
+            let mut timer = Timer::timer(Duration::from_secs(this.arg.cycle_cmds_time));
             loop {
                 timer.tick().await;
-                if w.lock().await.write(format!("{}\n", &this.arg.cycle_cmds_raw).as_bytes()).await.is_err() {
+                if w.lock()
+                    .await
+                    .write(format!("{}\n", &this.arg.cycle_cmds_raw).as_bytes())
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }

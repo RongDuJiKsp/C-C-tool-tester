@@ -1,5 +1,3 @@
-use crate::common::strings::StringPkg;
-
 mod application;
 mod chicken;
 mod common;
@@ -19,7 +17,7 @@ fn test() {
     let template = "hello &[lang] AreYouOk";
     let placeholder = "&[lang]";
 
-    let d = match StringPkg::extract_value(input, template, placeholder) {
+    let d = match common::strings::StringPkg::extract_value(input, template, placeholder) {
         Some(value) => format!("Extracted value: {}", value),
         None => "No match found".to_string(),
     };

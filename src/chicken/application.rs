@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::env;
-use clap::Parser;
 use crate::common::child::{client_streams, reset, run_exe_with_env};
 use crate::common::stdio::{MakeStdio, TransferStdio};
 use crate::common::sync::Ptr;
+use clap::Parser;
+use std::collections::HashMap;
+use std::env;
 
 #[derive(Debug, Parser)]
 struct ChickenArgs {
@@ -17,7 +17,6 @@ struct ChickenArgs {
     pub stdout: String,
     #[arg(long)]
     pub stderr: String,
-
 }
 impl MakeStdio for ChickenArgs {
     fn stdin(&self) -> String {
