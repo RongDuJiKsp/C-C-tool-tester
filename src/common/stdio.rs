@@ -53,8 +53,12 @@ impl TransferStdio {
                 if u == 0 {
                     break;
                 }
-                let _ = writer1.write(&buf[..u]).await;
-                let _ = writer2.write(&buf[..u]).await;
+                if writer1.write(&buf[..u]).await.is_err() {
+                    break;
+                }
+                if writer2.write(&buf[..u]).await.is_err() {
+                    break;
+                }
             }
         });
     }

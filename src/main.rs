@@ -1,3 +1,5 @@
+use crate::common::strings::StringPkg;
+
 mod application;
 mod chicken;
 mod common;
@@ -9,4 +11,17 @@ fn main() {
     tokio::runtime::Runtime::new()
         .expect("Runtine Init Failed")
         .block_on(application::run_application());
+}
+#[test]
+fn test() {
+    //test extract_value
+    let input = "hello Rust AreYouOk";
+    let template = "hello &[lang] AreYouOk";
+    let placeholder = "&[lang]";
+
+    let d = match StringPkg::extract_value(input, template, placeholder) {
+        Some(value) => format!("Extracted value: {}", value),
+        None => "No match found".to_string(),
+    };
+    assert_eq!(d, "Extracted value: Rust".to_string());
 }
