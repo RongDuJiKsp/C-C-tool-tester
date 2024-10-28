@@ -1,11 +1,11 @@
 use crate::common::child::{client_streams, reset, run_exe_with_env};
 use crate::common::stdio::TransferStdio;
 use crate::common::sync::Ptr;
-use crate::hacker::command::{CommandCtx};
+use crate::hacker::args::HackerArgs;
+use crate::hacker::command::CommandCtx;
 use clap::Parser;
 use std::collections::HashMap;
 use std::env;
-use crate::hacker::args::HackerArgs;
 
 pub async fn app() {
     let arg = HackerArgs::parse_from(env::args().skip(2));
@@ -37,7 +37,8 @@ pub async fn app() {
             Ptr::share(stderr_reader),
         );
         //handle
-        CommandCtx::make(arg.clone()).send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
+        CommandCtx::make(arg.clone())
+            .send_commend_and_waiting(i_stream.clone(), Ptr::share(std_union_reader));
         //wait exit;
         let _ = server.wait().await;
     }
