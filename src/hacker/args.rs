@@ -3,6 +3,7 @@ use crate::common::sync::Ptr;
 use clap::Parser;
 use tokio::fs::File;
 use tokio::io;
+use crate::common::stdio::MakeStdio;
 
 #[derive(Debug, Parser, Clone)]
 pub struct HackerArgs {
@@ -38,18 +39,17 @@ impl HackerArgs {
             .map(|x| x.to_string())
             .collect()
     }
-    pub async fn make_stdio(&self) -> io::Result<(StdinHd, StdoutHd, StderrHd)> {
-        let stdin = File::options().read(true).open(&self.stdin).await?;
-        let stdout = File::options()
-            .write(true)
-            .append(true)
-            .open(&self.stdout)
-            .await?;
-        let stderr = File::options()
-            .write(true)
-            .append(true)
-            .open(&self.stderr)
-            .await?;
-        Ok((Ptr::share(stdin), Ptr::share(stdout), Ptr::share(stderr)))
+}
+impl MakeStdio for HackerArgs {
+    fn stdin(&self) -> String {
+        self.stdin.clone()
+    }
+
+    fn stdout(&self) -> String {
+        self.stdout.clone()
+    }
+
+    fn stderr(&self) -> String {
+        self.stderr.clone()
     }
 }

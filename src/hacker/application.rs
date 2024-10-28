@@ -1,5 +1,5 @@
 use crate::common::child::{client_streams, reset, run_exe_with_env};
-use crate::common::stdio::TransferStdio;
+use crate::common::stdio::{MakeStdio, TransferStdio};
 use crate::common::sync::Ptr;
 use crate::hacker::args::HackerArgs;
 use crate::hacker::command::CommandCtx;

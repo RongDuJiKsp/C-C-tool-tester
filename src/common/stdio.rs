@@ -1,7 +1,8 @@
-use crate::common::alias::go;
-use crate::common::sync::Shared;
+use crate::common::alias::{go, StderrHd, StdinHd, StdoutHd};
+use crate::common::sync::{Ptr, Shared};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::{io, select};
+use tokio::fs::File;
 
 pub struct TransferStdio;
 impl TransferStdio {
@@ -108,5 +109,25 @@ impl TransferStd {
             buf.push(u);
         }
         String::from_utf8(buf).unwrap()
+    }
+}
+pub trait MakeStdio {
+    fn stdin(&self) -> String;
+    fn stdout(&self) -> String;
+    fn stderr(&self) -> String;
+
+    async fn make_stdio(&self) -> io::Result<(StdinHd, StdoutHd, StderrHd)> {
+        let stdin = File::options().read(true).open(&self.stdin()).await?;
+        let stdout = File::options()
+            .write(true)
+            .append(true)
+            .open(&self.stdout())
+            .await?;
+        let stderr = File::options()
+            .write(true)
+            .append(true)
+            .open(&self.stderr())
+            .await?;
+        Ok((Ptr::share(stdin), Ptr::share(stdout), Ptr::share(stderr)))
     }
 }
