@@ -14,8 +14,10 @@ impl TransferStdio {
     ) {
         tokio::spawn(async move {
             let mut buf = [0u8; 1024];
+            let mut w = writer.lock().await;
+            let mut r = reader.lock().await;
             loop {
-                let size = match reader.lock().await.read(&mut buf).await {
+                let size = match r.read(&mut buf).await {
                     Ok(s) => s,
                     Err(e) => {
                         println!("Read ToWrite.file Occupied Error:{}", e);
@@ -26,7 +28,7 @@ impl TransferStdio {
                     println!("Copying Close");
                     break;
                 }
-                if let Err(e) = writer.lock().await.write_all(&buf[..size]).await {
+                if let Err(e) = w.write_all(&buf[..size]).await {
                     println!("Write Stdin Occupied Error :{}", e);
                     break;
                 }
@@ -43,17 +45,14 @@ impl TransferStdio {
         w2: Shared<W2>,
     ) {
         go(async move {
-            let mut buf = Ptr::rw_share([0u8; 32768]);
-            while let Ok(u) = r.lock().await.read(&mut *buf.write().await).await {
-                if u == 0 {
-                    break;
-                }
-                let (mut wh1, mut wh2) = (w1.lock().await, w2.lock().await);
-                let (mut rh1, mut rh2) = (buf.read().await, buf.read().await);
-                let hd1 = go(async move {
-                    wh1.write(&rh1)
-                });
-                let hd2 = go(async move {});
+            let mut buf = [0u8; 32768];
+            let mut reader = r.lock().await;
+            let mut writer1 = w1.lock().await;
+            let mut writer2 = w2.lock().await;
+            while let Ok(u) = reader.read(&mut buf).await {
+                if u == 0 { break; }
+                let _ = writer1.write(&buf[..u]).await;
+                let _ = writer2.write(&buf[..u]).await;
             }
         });
     }
